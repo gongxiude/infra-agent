@@ -22,18 +22,6 @@ class TriggerSource(str, Enum):
     ALERT = "alert"
 
 
-class TaskType(str, Enum):
-    """任务类型。"""
-
-    CHAT = "chat"
-    JENKINS_PIPELINE_ANALYSIS = "jenkins_pipeline_analysis"
-    JENKINS_PIPELINE_CHANGE = "jenkins_pipeline_change"
-    SHARED_LIBRARY_ANALYSIS = "shared_library_analysis"
-    SHARED_LIBRARY_CHANGE = "shared_library_change"
-    GITOPS_REPOSITORY_CHANGE = "gitops_repository_change"
-    ALERT_TRIAGE = "alert_triage"
-
-
 class TaskPriority(str, Enum):
     """任务优先级。"""
 
@@ -66,7 +54,7 @@ class AgentTask(BaseModel):
     """标准任务对象。"""
 
     id: str = Field(default_factory=lambda: str(uuid4()))
-    type: TaskType
+    type: str = "chat"
     trigger: TaskTrigger
     context: TaskContext
     payload: dict[str, Any] = Field(default_factory=dict)
@@ -109,11 +97,3 @@ class TaskEvent(BaseModel):
     message: str
     payload: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
-
-
-class RouteResult(BaseModel):
-    """自然语言路由结果。"""
-
-    task_type: TaskType
-    context: TaskContext
-    payload: dict[str, Any]

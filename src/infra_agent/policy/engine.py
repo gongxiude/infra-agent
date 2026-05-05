@@ -1,32 +1,28 @@
 # -*- coding: utf-8 -*-
 
-"""最小策略引擎。"""
+"""策略引擎（从 AGENT.md frontmatter 生成 PolicyDecision）。"""
 
 from __future__ import annotations
 
-from infra_agent.core.models import AgentTask, PolicyDecision, TaskType
-from infra_agent.core.settings import AppSettings
+from infra_agent.agents.models import AgentDefinition
+from infra_agent.core.models import PolicyDecision
 
 
-class PolicyEngine:
-    """根据任务生成最小策略决策。"""
+def policy_from_definition(defn: AgentDefinition) -> PolicyDecision:
+    """从 AgentDefinition 生成 PolicyDecision。
 
-    def __init__(self, settings: AppSettings) -> None:
-        """初始化策略引擎。"""
+    Args:
+        defn: 子代理定义
 
-        self._settings = settings
+    Returns:
+        对应的策略决策。
+    """
 
-    def evaluate(self, task: AgentTask) -> PolicyDecision:
-        """评估任务。"""
-
-        decision = PolicyDecision()
-        if task.type in {
-            TaskType.JENKINS_PIPELINE_CHANGE,
-            TaskType.SHARED_LIBRARY_CHANGE,
-            TaskType.GITOPS_REPOSITORY_CHANGE,
-        }:
-            decision.allowed_tools = ["inspect_workspace", "read_file", "write_file", "git_status", "git_diff"]
-            decision.skill_slugs = ["git-operations"]
-        else:
-            decision.allowed_tools = ["inspect_workspace", "read_file"]
-        return decision
+    return PolicyDecision(
+        tier=defn.tier,
+        max_iterations=defn.max_iterations,
+        timeout_seconds=defn.timeout_seconds,
+        allowed_tools=defn.tools,
+        skill_slugs=defn.skills,
+        requires_pr=defn.requires_pr,
+    )

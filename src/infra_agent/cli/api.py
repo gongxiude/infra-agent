@@ -12,14 +12,13 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from infra_agent.core.agent import create_infra_agent
-from infra_agent.core.models import TaskContext, TaskType
+from infra_agent.core.models import TaskContext
 from infra_agent.core.service import InfraAgentService
 from infra_agent.core.settings import AppSettings
 from infra_agent.execution.queue import InMemoryDispatchQueue
 from infra_agent.ingestion.router import SignalRouter
 from infra_agent.integrations.git.workspace import GitWorkspaceManager
 from infra_agent.observability.store import InMemoryStore
-from infra_agent.policy.engine import PolicyEngine
 
 SERVICE: InfraAgentService | None = None
 
@@ -27,7 +26,7 @@ SERVICE: InfraAgentService | None = None
 class SubmitTaskRequest(BaseModel):
     """任务提交请求。"""
 
-    task_type: TaskType
+    task_type: str
     source_id: str
     payload: dict[str, Any]
     context: TaskContext
@@ -40,7 +39,6 @@ def build_service(settings: AppSettings) -> InfraAgentService:
     if SERVICE is None:
         SERVICE = InfraAgentService(
             signal_router=SignalRouter(),
-            policy_engine=PolicyEngine(settings),
             queue=InMemoryDispatchQueue(),
             store=InMemoryStore(),
             agent=create_infra_agent(settings),
@@ -81,12 +79,11 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
             payload=request.payload,
             context=request.context,
         )
-        decision = await service.submit_task(task)
+        await service.submit_task(task)
         result = await service.run_once()
         return {
             "task_id": task.id,
-            "task_type": task.type.value,
-            "policy": decision.model_dump(mode="json"),
+            "task_type": task.type,
             "result": result,
         }
 
@@ -104,13 +101,12 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
             payload=payload,
             context=context,
         )
-        decision = await service.submit_task(task)
+        await service.submit_task(task)
         result = await service.run_once()
         return {
             "task_id": task.id,
-            "task_type": task.type.value,
+            "task_type": task.type,
             "context": task.context.model_dump(mode="json"),
-            "policy": decision.model_dump(mode="json"),
             "result": result,
         }
 
@@ -121,13 +117,13 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         service: InfraAgentService = app.state.service
         task = service.signal_router.from_webhook(
             source_id=str(payload.get("build_id", "jenkins-webhook")),
-            task_type=TaskType.JENKINS_PIPELINE_CHANGE,
+            task_type="jenkins_pipeline_change",
             payload=payload,
             context=TaskContext(repository_alias=str(payload.get("repository_alias", "jenkins-pipeline"))),
         )
-        decision = await service.submit_task(task)
+        await service.submit_task(task)
         result = await service.run_once()
-        return {"task_id": task.id, "policy": decision.model_dump(mode="json"), "result": result}
+        return {"task_id": task.id, "result": result}
 
     @app.post("/alerts")
     async def alerts(payload: dict[str, Any]) -> dict[str, Any]:
@@ -139,9 +135,9 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
             payload=payload,
             context=TaskContext(),
         )
-        decision = await service.submit_task(task)
+        await service.submit_task(task)
         result = await service.run_once()
-        return {"task_id": task.id, "policy": decision.model_dump(mode="json"), "result": result}
+        return {"task_id": task.id, "result": result}
 
     @app.get("/api/tasks")
     async def list_tasks() -> list[dict[str, Any]]:

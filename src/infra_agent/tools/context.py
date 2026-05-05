@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from infra_agent.core.models import AgentTask, PolicyDecision
@@ -17,3 +17,5 @@ class AgentContext:
     workspace_root: Path
     policy: PolicyDecision
     task: AgentTask
+    skills_dir: Path = field(default_factory=lambda: Path("skills"))
+    allowed_skills: list[str] = field(default_factory=list)

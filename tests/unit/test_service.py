@@ -16,7 +16,6 @@ from infra_agent.execution.queue import InMemoryDispatchQueue
 from infra_agent.ingestion.router import SignalRouter
 from infra_agent.integrations.git.workspace import GitWorkspaceManager
 from infra_agent.observability.store import InMemoryStore
-from infra_agent.policy.engine import PolicyEngine
 
 
 @dataclass
@@ -32,7 +31,6 @@ def test_service_submit_and_run_once() -> None:
     settings = AppSettings.from_env()
     service = InfraAgentService(
         signal_router=SignalRouter(),
-        policy_engine=PolicyEngine(settings),
         queue=InMemoryDispatchQueue(),
         store=InMemoryStore(),
         agent=create_infra_agent(settings),
@@ -46,7 +44,6 @@ def test_service_submit_and_run_once() -> None:
             context=TaskContext(),
         )
         await service.submit_task(task)
-        # mock Runner.run 避免真实 API 调用
         with patch("agents.Runner.run", new_callable=AsyncMock, return_value=_MockRunResult()):
             return await service.run_once()
 

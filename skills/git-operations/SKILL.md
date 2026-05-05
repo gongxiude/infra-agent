@@ -1,3 +1,8 @@
+---
+name: git-operations
+description: Git workspace 检查、文件分析、diff、commit 和 push 操作指南
+---
+
 # Git Operations
 
 ## When To Use

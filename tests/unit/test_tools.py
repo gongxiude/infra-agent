@@ -4,10 +4,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
-
 from infra_agent.core.models import PolicyDecision
 from infra_agent.tools import ALL_TOOLS, get_tools_for_policy
 
@@ -60,7 +56,10 @@ class TestGetToolsForPolicy:
         assert names == {"inspect_workspace"}
 
     def test_all_tools_registered(self) -> None:
-        """ALL_TOOLS 包含 5 个预期工具。"""
+        """ALL_TOOLS 包含 7 个预期工具。"""
 
-        expected = {"inspect_workspace", "read_file", "write_file", "git_status", "git_diff"}
+        expected = {
+            "inspect_workspace", "read_file", "write_file",
+            "git_status", "git_diff", "load_skill", "read_skill_file",
+        }
         assert set(ALL_TOOLS.keys()) == expected

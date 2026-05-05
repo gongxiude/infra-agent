@@ -1,3 +1,8 @@
+---
+name: jenkins-pipeline-analysis
+description: Jenkins pipeline、job DSL 和流水线结构分析指南
+---
+
 # Jenkins Pipeline Analysis
 
 ## When To Use

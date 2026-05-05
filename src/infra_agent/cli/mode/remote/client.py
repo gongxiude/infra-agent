@@ -8,7 +8,7 @@ import json
 from urllib import request
 
 from infra_agent.cli.configuration.models import CliConfig
-from infra_agent.core.models import TaskContext, TaskType
+from infra_agent.core.models import TaskContext
 
 
 class RemoteClient:
@@ -22,7 +22,7 @@ class RemoteClient:
     def submit_task(
         self,
         *,
-        task_type: TaskType,
+        task_type: str,
         source_id: str,
         payload: dict,
         context: TaskContext,
@@ -32,7 +32,7 @@ class RemoteClient:
         return self._post(
             "/api/tasks",
             {
-                "task_type": task_type.value,
+                "task_type": task_type,
                 "source_id": source_id,
                 "payload": payload,
                 "context": context.model_dump(mode="json"),

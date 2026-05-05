@@ -20,11 +20,11 @@ def test_local_mode_accepts_natural_language(fake_input) -> None:
         service = MagicMock()
         service.signal_router.from_user_chat.return_value = MagicMock(
             id="task-1",
-            type=MagicMock(value="jenkins_pipeline_change"),
+            type="chat",
             context=MagicMock(model_dump=MagicMock(return_value={})),
         )
         async def submit_task(task):
-            return MagicMock(model_dump=MagicMock(return_value={"allowed": True}))
+            return None
         async def run_once():
             return {"final_output": "ok"}
         service.submit_task = submit_task

@@ -1,3 +1,8 @@
+---
+name: shared-library-maintenance
+description: Jenkins shared library 目录结构、vars/src 分析和维护指南
+---
+
 # Shared Library Maintenance
 
 ## When To Use

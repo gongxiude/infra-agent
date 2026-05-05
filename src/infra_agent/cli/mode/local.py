@@ -13,13 +13,12 @@ from rich.panel import Panel
 from infra_agent.cli.env import load_settings
 from infra_agent.cli.presentation.console import console
 from infra_agent.core.agent import create_infra_agent
-from infra_agent.core.models import TaskContext, TaskType
+from infra_agent.core.models import TaskContext
 from infra_agent.core.service import InfraAgentService
 from infra_agent.execution.queue import InMemoryDispatchQueue
 from infra_agent.ingestion.router import SignalRouter
 from infra_agent.integrations.git.workspace import GitWorkspaceManager
 from infra_agent.observability.store import InMemoryStore
-from infra_agent.policy.engine import PolicyEngine
 
 
 def build_local_service() -> InfraAgentService:
@@ -28,7 +27,6 @@ def build_local_service() -> InfraAgentService:
     settings = load_settings()
     return InfraAgentService(
         signal_router=SignalRouter(),
-        policy_engine=PolicyEngine(settings),
         queue=InMemoryDispatchQueue(),
         store=InMemoryStore(),
         agent=create_infra_agent(settings),
@@ -81,7 +79,7 @@ async def _run_local_shell() -> None:
                 continue
             result = await _submit_typed_task(
                 service,
-                task_type=TaskType.JENKINS_PIPELINE_CHANGE,
+                task_type="jenkins_pipeline_change",
                 payload=payload,
                 context=TaskContext(repository_alias=str(payload.get("repository_alias", "jenkins-pipeline"))),
             )
@@ -99,20 +97,19 @@ async def _submit_chat(service: InfraAgentService, message: str) -> dict[str, An
         payload={"message": message},
         context=TaskContext(),
     )
-    decision = await service.submit_task(task)
+    await service.submit_task(task)
     result = await service.run_once()
     return {
         "task_id": task.id,
-        "task_type": task.type.value,
+        "task_type": task.type,
         "context": task.context.model_dump(mode="json"),
-        "policy": decision.model_dump(mode="json"),
         "result": result,
     }
 
 
 async def _submit_typed_task(
     service: InfraAgentService,
-    task_type: TaskType,
+    task_type: str,
     payload: dict[str, Any],
     context: TaskContext,
 ) -> dict[str, Any]:
@@ -124,12 +121,11 @@ async def _submit_typed_task(
         payload=payload,
         context=context,
     )
-    decision = await service.submit_task(task)
+    await service.submit_task(task)
     result = await service.run_once()
     return {
         "task_id": task.id,
-        "task_type": task.type.value,
-        "policy": decision.model_dump(mode="json"),
+        "task_type": task.type,
         "result": result,
     }
 

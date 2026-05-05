@@ -11,7 +11,7 @@ from rich.panel import Panel
 from infra_agent.cli.configuration.store import load_config
 from infra_agent.cli.mode.remote.client import RemoteClient
 from infra_agent.cli.presentation.console import console
-from infra_agent.core.models import TaskContext, TaskType
+from infra_agent.core.models import TaskContext
 
 
 def run_remote_mode() -> None:
@@ -51,7 +51,7 @@ def run_remote_mode() -> None:
                 continue
             console.print(
                 client.submit_task(
-                    task_type=TaskType.JENKINS_PIPELINE_CHANGE,
+                    task_type="jenkins_pipeline_change",
                     source_id="cli-remote",
                     payload=payload,
                     context=TaskContext(repository_alias=str(payload.get("repository_alias", "jenkins-pipeline"))),

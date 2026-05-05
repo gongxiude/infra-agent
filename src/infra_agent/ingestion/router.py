@@ -1,28 +1,22 @@
 # -*- coding: utf-8 -*-
 
-"""Signal Router。"""
+"""Signal Router（入口信号统一处理）。"""
 
 from __future__ import annotations
 
 from typing import Any
 
-from infra_agent.core.models import AgentTask, TaskContext, TaskTrigger, TaskType, TriggerSource
-from infra_agent.core.router import NaturalLanguageRouter
+from infra_agent.core.models import AgentTask, TaskContext, TaskTrigger, TriggerSource
 
 
 class SignalRouter:
-    """统一入口信号。"""
-
-    def __init__(self) -> None:
-        """初始化路由器。"""
-
-        self._nl_router = NaturalLanguageRouter()
+    """统一入口信号，将各种来源转换为标准 AgentTask。"""
 
     def from_webhook(
         self,
         *,
         source_id: str,
-        task_type: TaskType,
+        task_type: str,
         payload: dict[str, Any],
         context: TaskContext,
     ) -> AgentTask:
@@ -34,7 +28,7 @@ class SignalRouter:
         self,
         *,
         source_id: str,
-        task_type: TaskType,
+        task_type: str,
         payload: dict[str, Any],
         context: TaskContext,
     ) -> AgentTask:
@@ -46,7 +40,7 @@ class SignalRouter:
         self,
         *,
         source_id: str,
-        task_type: TaskType,
+        task_type: str,
         payload: dict[str, Any],
         context: TaskContext,
     ) -> AgentTask:
@@ -63,7 +57,7 @@ class SignalRouter:
     ) -> AgentTask:
         """处理 alert 入口。"""
 
-        return self._build_task(TriggerSource.ALERT, source_id, TaskType.ALERT_TRIAGE, payload, context)
+        return self._build_task(TriggerSource.ALERT, source_id, "alert_triage", payload, context)
 
     def from_user_chat(
         self,
@@ -72,18 +66,15 @@ class SignalRouter:
         payload: dict[str, Any],
         context: TaskContext,
     ) -> AgentTask:
-        """处理用户对话入口。"""
+        """处理用户对话入口（路由由 LLM triage agent 决定）。"""
 
-        message = str(payload.get("message", "")).strip()
-        route = self._nl_router.route(message, context)
-        merged_payload = {**payload, **route.payload}
-        return self._build_task(TriggerSource.USER, source_id, route.task_type, merged_payload, route.context)
+        return self._build_task(TriggerSource.USER, source_id, "chat", payload, context)
 
     def _build_task(
         self,
         source: TriggerSource,
         source_id: str,
-        task_type: TaskType,
+        task_type: str,
         payload: dict[str, Any],
         context: TaskContext,
     ) -> AgentTask:

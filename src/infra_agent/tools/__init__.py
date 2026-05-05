@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from infra_agent.core.models import PolicyDecision
+from infra_agent.tools.skill_tools import load_skill, read_skill_file
 from infra_agent.tools.workspace_tools import (
     git_diff,
     git_status,
@@ -13,13 +14,15 @@ from infra_agent.tools.workspace_tools import (
     write_file,
 )
 
-# 全部可用工具，键名与 PolicyEngine 输出的 allowed_tools 一致
+# 全部可用工具
 ALL_TOOLS = {
     "inspect_workspace": inspect_workspace,
     "read_file": read_file,
     "write_file": write_file,
     "git_status": git_status,
     "git_diff": git_diff,
+    "load_skill": load_skill,
+    "read_skill_file": read_skill_file,
 }
 
 

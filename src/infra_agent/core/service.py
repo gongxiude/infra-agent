@@ -5,12 +5,11 @@
 from __future__ import annotations
 
 from infra_agent.core.agent import InfraAgent
-from infra_agent.core.models import AgentTask, PolicyDecision, TaskEvent, TaskRecord
+from infra_agent.core.models import AgentTask, TaskEvent, TaskRecord
 from infra_agent.execution.queue import InMemoryDispatchQueue
 from infra_agent.ingestion.router import SignalRouter
 from infra_agent.integrations.git.workspace import GitWorkspaceManager
 from infra_agent.observability.store import InMemoryStore
-from infra_agent.policy.engine import PolicyEngine
 
 
 class InfraAgentService:
@@ -19,7 +18,6 @@ class InfraAgentService:
     def __init__(
         self,
         signal_router: SignalRouter,
-        policy_engine: PolicyEngine,
         queue: InMemoryDispatchQueue,
         store: InMemoryStore,
         agent: InfraAgent,
@@ -28,19 +26,17 @@ class InfraAgentService:
         """初始化服务。"""
 
         self.signal_router = signal_router
-        self.policy_engine = policy_engine
         self.queue = queue
         self.store = store
         self.agent = agent
         self.workspace_manager = workspace_manager
 
-    async def submit_task(self, task: AgentTask) -> PolicyDecision:
+    async def submit_task(self, task: AgentTask) -> None:
         """提交任务。"""
 
-        decision = self.policy_engine.evaluate(task)
         record = TaskRecord(
             id=task.id,
-            type=task.type.value,
+            type=task.type,
             source=task.trigger.source.value,
             status="dispatched",
             repository_alias=task.context.repository_alias,
@@ -52,7 +48,6 @@ class InfraAgentService:
             TaskEvent(task_id=task.id, event_type="task_dispatched", message="任务已入队。")
         )
         await self.queue.enqueue(task)
-        return decision
 
     async def run_once(self) -> dict | None:
         """执行单个任务。"""
@@ -64,12 +59,12 @@ class InfraAgentService:
         await self.store.append_event(
             TaskEvent(task_id=task.id, event_type="task_started", message="任务开始执行。")
         )
-        # 重新评估策略（纯函数，无副作用）
-        decision = self.policy_engine.evaluate(task)
+        # workspace 准备
         workspace = None
         if task.context.repository_alias:
             workspace = self.workspace_manager.ensure_workspace(task.context.repository_alias)
-        result = await self.agent.run(task, policy=decision)
+        # 由 triage agent + subagent handoff 执行
+        result = await self.agent.run(task)
         payload = {
             **result,
             "workspace": workspace,
