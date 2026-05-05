@@ -19,3 +19,4 @@ class AgentContext:
     task: AgentTask
     skills_dir: Path = field(default_factory=lambda: Path("skills"))
     allowed_skills: list[str] = field(default_factory=list)
+    remote_repositories: dict[str, str] = field(default_factory=dict)

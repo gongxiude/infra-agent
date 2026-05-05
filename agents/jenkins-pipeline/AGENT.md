@@ -1,5 +1,5 @@
 ---
-name: jenkins-pipeline
+name: jenkins_pipeline
 description: Jenkins pipeline 分析与变更管理，涵盖 Jenkinsfile、pipeline job、流水线维护
 tools: [inspect_workspace, read_file, write_file, git_status, git_diff]
 skills: [git-operations, jenkins-pipeline-analysis]

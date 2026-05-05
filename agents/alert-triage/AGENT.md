@@ -1,5 +1,5 @@
 ---
-name: alert-triage
+name: alert_triage
 description: 告警与事件处置，涵盖 PagerDuty、CloudWatch、incident、报警等场景
 tools: [inspect_workspace, read_file]
 skills: []

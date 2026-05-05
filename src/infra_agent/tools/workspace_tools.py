@@ -14,15 +14,55 @@ from infra_agent.tools.context import AgentContext
 
 # 子进程执行超时（秒）
 _SUBPROCESS_TIMEOUT = 30
+_GIT_CLONE_TIMEOUT = 120
 
 
-def _resolve_workspace(ctx: RunContextWrapper[AgentContext], repository_alias: str) -> Path:
-    """解析并验证 workspace 路径。"""
+async def _resolve_workspace(ctx: RunContextWrapper[AgentContext], repository_alias: str) -> Path:
+    """解析 workspace 路径，必要时自动 clone。"""
 
     workspace = ctx.context.workspace_root / repository_alias
-    if not workspace.exists():
-        raise FileNotFoundError(f"workspace 不存在: {workspace}")
+    workspace.mkdir(parents=True, exist_ok=True)
+
+    # 如果目录为空或不是 git repo，尝试 clone
+    git_dir = workspace / ".git"
+    if not git_dir.exists():
+        remote_url = ctx.context.remote_repositories.get(repository_alias, "")
+        if remote_url:
+            await _clone_repo(remote_url, workspace)
+        else:
+            raise FileNotFoundError(
+                f"workspace '{repository_alias}' 为空且未配置远程仓库地址。"
+                f"请在 AGENT_GIT_REMOTE_REPOSITORIES 中配置。"
+            )
     return workspace
+
+
+async def _clone_repo(remote_url: str, target: Path) -> None:
+    """执行 git clone（如果目标目录非空则先清空再 clone 到临时目录再移动）。"""
+
+    import shutil
+    import tempfile
+
+    # clone 到临时目录再移动，避免 git clone 报目标非空
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp) / "repo"
+        proc = await asyncio.create_subprocess_exec(
+            "git", "clone", remote_url, str(tmp_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=_GIT_CLONE_TIMEOUT)
+        if proc.returncode != 0:
+            raise RuntimeError(f"git clone 失败: {stderr.decode().strip()}")
+        # 移动 clone 内容到目标
+        for item in tmp_path.iterdir():
+            dest = target / item.name
+            if dest.exists():
+                if dest.is_dir():
+                    shutil.rmtree(dest)
+                else:
+                    dest.unlink()
+            shutil.move(str(item), str(dest))
 
 
 def _safe_resolve(workspace: Path, file_path: str) -> Path:
@@ -60,7 +100,7 @@ async def inspect_workspace(
         repository_alias: 仓库别名
     """
 
-    workspace = _resolve_workspace(ctx, repository_alias)
+    workspace = await _resolve_workspace(ctx, repository_alias)
     entries: list[str] = []
     for item in sorted(workspace.iterdir()):
         prefix = "d " if item.is_dir() else "f "
@@ -89,7 +129,7 @@ async def read_file(
         file_path: 相对于 workspace 的文件路径
     """
 
-    workspace = _resolve_workspace(ctx, repository_alias)
+    workspace = await _resolve_workspace(ctx, repository_alias)
     resolved = _safe_resolve(workspace, file_path)
     if not resolved.is_file():
         return f"文件不存在: {file_path}"
@@ -116,7 +156,7 @@ async def write_file(
         content: 要写入的内容
     """
 
-    workspace = _resolve_workspace(ctx, repository_alias)
+    workspace = await _resolve_workspace(ctx, repository_alias)
     resolved = _safe_resolve(workspace, file_path)
     resolved.parent.mkdir(parents=True, exist_ok=True)
     resolved.write_text(content, encoding="utf-8")
@@ -134,7 +174,7 @@ async def git_status(
         repository_alias: 仓库别名
     """
 
-    workspace = _resolve_workspace(ctx, repository_alias)
+    workspace = await _resolve_workspace(ctx, repository_alias)
     return await _run_git(workspace, "status", "--porcelain")
 
 
@@ -149,7 +189,7 @@ async def git_diff(
         repository_alias: 仓库别名
     """
 
-    workspace = _resolve_workspace(ctx, repository_alias)
+    workspace = await _resolve_workspace(ctx, repository_alias)
     output = await _run_git(workspace, "diff")
     # 截断超大 diff
     max_chars = 30_000

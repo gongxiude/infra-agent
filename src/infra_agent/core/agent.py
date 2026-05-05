@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from agents import Runner, set_default_openai_key
+from agents import Runner, set_default_openai_key, set_tracing_disabled
 
 from infra_agent.agents.loader import build_triage_agent
 from infra_agent.core.models import AgentTask, PolicyDecision
@@ -34,6 +34,9 @@ class InfraAgent:
         if self.settings.openai_api_key:
             set_default_openai_key(self.settings.openai_api_key)
 
+        # 禁用 tracing（避免国内网络环境下 timeout 警告）
+        set_tracing_disabled(True)
+
         self._triage_agent = build_triage_agent(
             agents_dir=self._agents_dir,
             skills_dir=self._skills_dir,
@@ -57,6 +60,7 @@ class InfraAgent:
             task=task,
             skills_dir=self._skills_dir,
             allowed_skills=[],
+            remote_repositories=self.settings.git.remote_repositories,
         )
 
         # 构建用户输入
