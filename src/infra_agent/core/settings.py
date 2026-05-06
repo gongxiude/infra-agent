@@ -14,10 +14,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from infra_agent.config.paths import data_dir, project_root
 
-# 启动时加载 .env 和 .env.local（使用项目根目录的绝对路径）
+# 启动时加载 .env.local 和 .env（.env 优先级更高，后加载覆盖前者）
 _root = project_root()
-load_dotenv(_root / ".env", override=False)
-load_dotenv(_root / ".env.local", override=True)
+load_dotenv(_root / ".env.local", override=False)
+load_dotenv(_root / ".env", override=True)
 
 
 class GitSettings(BaseModel):
