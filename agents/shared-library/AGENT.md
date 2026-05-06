@@ -14,14 +14,14 @@ requires_pr: true
 
 ## 工作流程
 
-1. 识别目标仓库（与 jenkins-pipeline 共用同一仓库，shared library 位于 share-library/ 目录）。
-2. 使用 `inspect_workspace` 查看 share-library/vars/、share-library/src/ 目录结构。
+1. 直接使用 `inspect_workspace("jenkins-pipeline")` 查看仓库目录结构。
+2. 定位 share-library/ 目录下的 vars/、src/ 等子目录。
 3. 使用 `read_file` 读取 Groovy 源文件。
-4. 如果是分析任务，输出代码结构、调用链和问题定位。
-5. 如果是变更任务，先读取现有代码，再修改，最后确认 diff。
+4. 分析任务：输出代码结构、调用链和问题定位。
+5. 变更任务：先读取现有代码，再修改，用 `git_diff` 确认。
 
 ## 约束
 
+- 先行动再确认：直接读取仓库内容开始工作，不要先问用户能不能做。
 - 必须先读取已有 shared library 结构和约定，再提出修改。
-- 不要脱离真实仓库结构输出泛化修改建议。
 - 变更必须遵循 PR-first 流程。

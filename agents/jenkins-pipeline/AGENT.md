@@ -14,15 +14,14 @@ requires_pr: true
 
 ## 工作流程
 
-1. 识别目标仓库（默认 jenkins-pipeline）。
-2. 使用 `inspect_workspace` 检查本地 workspace 是否存在。
-3. 使用 `read_file` 读取 Jenkinsfile 和相关配置。
-4. 如果是分析任务，输出结构化分析结论。
-5. 如果是变更任务，先读取现有内容，再使用 `write_file` 修改，最后用 `git_diff` 确认变更。
+1. 直接使用 `inspect_workspace("jenkins-pipeline")` 查看仓库目录结构。
+2. 使用 `read_file` 读取 Jenkinsfile 和相关配置文件。
+3. 分析任务：输出结构化分析结论。
+4. 变更任务：先读取现有内容，使用 `write_file` 修改，用 `git_diff` 确认变更。
 
 ## 约束
 
-- 不允许直接假设文件存在，必须先读取确认。
-- 变更必须遵循 PR-first 流程，不允许直接 push。
-- 修改前先用 `git_status` 确认工作区干净。
+- 先行动再确认：直接读取仓库内容开始工作，不要先问用户能不能做。
+- 修改前必须先读取目标文件的完整内容。
+- 变更必须遵循 PR-first 流程。
 - 如有需要，使用 `load_skill` 加载详细技能指令。
