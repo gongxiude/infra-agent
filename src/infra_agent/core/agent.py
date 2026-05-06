@@ -88,6 +88,7 @@ class InfraAgent:
             input=user_input,
             context=context,
             hooks=LoggingHooks(),
+            max_turns=40,
         )
 
         return {
