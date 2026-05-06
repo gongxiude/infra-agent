@@ -14,6 +14,7 @@ from infra_agent.agents.loader import build_triage_agent
 from infra_agent.core.models import AgentTask, PolicyDecision
 from infra_agent.core.prompts import build_task_prompt
 from infra_agent.core.settings import AppSettings
+from infra_agent.observability.hooks import LoggingHooks
 from infra_agent.tools.context import AgentContext
 
 
@@ -86,6 +87,7 @@ class InfraAgent:
             triage,
             input=user_input,
             context=context,
+            hooks=LoggingHooks(),
         )
 
         return {

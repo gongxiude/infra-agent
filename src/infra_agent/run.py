@@ -5,6 +5,17 @@
 from __future__ import annotations
 
 import argparse
+import logging
+
+
+def _setup_logging() -> None:
+    """配置日志格式。"""
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -34,6 +45,7 @@ def run_worker() -> None:
 def main(argv: list[str] | None = None) -> None:
     """运行启动入口。"""
 
+    _setup_logging()
     args = build_parser().parse_args(argv)
     if args.command == "worker":
         run_worker()
