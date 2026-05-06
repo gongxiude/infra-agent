@@ -90,6 +90,23 @@ async def _run_git(workspace: Path, *args: str) -> str:
 
 
 @function_tool
+async def list_workspaces(
+    ctx: RunContextWrapper[AgentContext],
+) -> str:
+    """列出所有已配置的仓库别名及其远程地址。"""
+
+    repos = ctx.context.remote_repositories
+    if not repos:
+        return "未配置任何远程仓库。请在 AGENT_GIT_REMOTE_REPOSITORIES 中添加。"
+    lines: list[str] = []
+    for alias, url in repos.items():
+        workspace = ctx.context.workspace_root / alias
+        status = "已 clone" if (workspace / ".git").exists() else "未 clone"
+        lines.append(f"- {alias}: {url} ({status})")
+    return "\n".join(lines)
+
+
+@function_tool
 async def inspect_workspace(
     ctx: RunContextWrapper[AgentContext],
     repository_alias: str,

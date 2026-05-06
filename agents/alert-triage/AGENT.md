@@ -1,7 +1,7 @@
 ---
 name: alert_triage
 description: 告警与事件处置，涵盖 PagerDuty、CloudWatch、incident、报警等场景
-tools: [inspect_workspace, read_file]
+tools: [list_workspaces, inspect_workspace, read_file]
 skills: []
 tier: 1
 max_iterations: 20

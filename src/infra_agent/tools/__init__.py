@@ -10,12 +10,14 @@ from infra_agent.tools.workspace_tools import (
     git_diff,
     git_status,
     inspect_workspace,
+    list_workspaces,
     read_file,
     write_file,
 )
 
 # 全部可用工具
 ALL_TOOLS = {
+    "list_workspaces": list_workspaces,
     "inspect_workspace": inspect_workspace,
     "read_file": read_file,
     "write_file": write_file,

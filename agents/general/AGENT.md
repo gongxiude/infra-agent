@@ -1,7 +1,7 @@
 ---
 name: general
 description: 通用对话与问答，处理无法匹配到专家代理的请求
-tools: [inspect_workspace, read_file]
+tools: [list_workspaces, inspect_workspace, read_file]
 skills: []
 tier: 0
 max_iterations: 10

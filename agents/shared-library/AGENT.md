@@ -1,7 +1,7 @@
 ---
 name: shared_library
 description: Jenkins shared library 分析与维护，涵盖 vars/、src/、Groovy 共享库
-tools: [inspect_workspace, read_file, write_file, git_status, git_diff]
+tools: [list_workspaces, inspect_workspace, read_file, write_file, git_status, git_diff]
 skills: [git-operations, shared-library-maintenance]
 tier: 2
 max_iterations: 15

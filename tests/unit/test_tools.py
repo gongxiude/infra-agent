@@ -56,10 +56,10 @@ class TestGetToolsForPolicy:
         assert names == {"inspect_workspace"}
 
     def test_all_tools_registered(self) -> None:
-        """ALL_TOOLS 包含 7 个预期工具。"""
+        """ALL_TOOLS 包含 8 个预期工具。"""
 
         expected = {
-            "inspect_workspace", "read_file", "write_file",
+            "list_workspaces", "inspect_workspace", "read_file", "write_file",
             "git_status", "git_diff", "load_skill", "read_skill_file",
         }
         assert set(ALL_TOOLS.keys()) == expected
