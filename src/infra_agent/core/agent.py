@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from agents import Runner, set_default_openai_key, set_tracing_disabled
+from openai import AsyncOpenAI
 
 from infra_agent.agents.loader import build_triage_agent
 from infra_agent.core.models import AgentTask, PolicyDecision
@@ -24,6 +25,7 @@ class InfraAgent:
     _agents_dir: Path = field(default_factory=lambda: Path("agents"))
     _skills_dir: Path = field(default_factory=lambda: Path("skills"))
     _triage_agent: object | None = field(default=None, init=False, repr=False)
+    _model_provider: object | None = field(default=None, init=False, repr=False)
 
     def _ensure_triage_agent(self):
         """懒构建 triage agent。"""
@@ -37,10 +39,23 @@ class InfraAgent:
         # 禁用 tracing（避免国内网络环境下 timeout 警告）
         set_tracing_disabled(True)
 
+        # 如果配置了自定义 base_url，创建自定义 model provider
+        if self.settings.openai_base_url:
+            from agents import OpenAIResponsesModel
+
+            client = AsyncOpenAI(
+                api_key=self.settings.openai_api_key,
+                base_url=self.settings.openai_base_url,
+            )
+            self._model_provider = OpenAIResponsesModel(
+                model=self.settings.runtime.model,
+                openai_client=client,
+            )
+
         self._triage_agent = build_triage_agent(
             agents_dir=self._agents_dir,
             skills_dir=self._skills_dir,
-            model=self.settings.runtime.model,
+            model=self._model_provider or self.settings.runtime.model,
         )
         return self._triage_agent
 
@@ -53,7 +68,7 @@ class InfraAgent:
 
         triage = self._ensure_triage_agent()
 
-        # 构建运行上下文（triage 层级使用默认策略，子代理策略由 AGENT.md 定义）
+        # 构建运行上下文
         context = AgentContext(
             workspace_root=Path(self.settings.git.workspace_root),
             policy=PolicyDecision(),

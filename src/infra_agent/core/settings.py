@@ -8,10 +8,16 @@ import json
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from infra_agent.config.paths import data_dir
+from infra_agent.config.paths import data_dir, project_root
+
+# 启动时加载 .env 和 .env.local（使用项目根目录的绝对路径）
+_root = project_root()
+load_dotenv(_root / ".env", override=False)
+load_dotenv(_root / ".env.local", override=True)
 
 
 class GitSettings(BaseModel):
@@ -36,10 +42,16 @@ class RuntimeSettings(BaseModel):
 class AppSettings(BaseSettings):
     """应用配置。"""
 
-    model_config = SettingsConfigDict(env_prefix="INFRA_AGENT_", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="INFRA_AGENT_",
+        extra="ignore",
+        env_file=(".env", ".env.local"),
+        env_file_encoding="utf-8",
+    )
 
     app_name: str = "infra-agent"
     openai_api_key: str | None = None
+    openai_base_url: str | None = None
     git: GitSettings = Field(default_factory=GitSettings)
     runtime: RuntimeSettings = Field(default_factory=RuntimeSettings)
 
@@ -48,6 +60,12 @@ class AppSettings(BaseSettings):
         """从环境变量加载配置。"""
 
         settings = cls()
+        # 兼容 OPENAI_API_KEY 和 INFRA_AGENT_OPENAI_API_KEY
+        if not settings.openai_api_key:
+            settings.openai_api_key = os.getenv("OPENAI_API_KEY", "")
+        # 兼容 OPENAI_BASE_URL
+        if not settings.openai_base_url:
+            settings.openai_base_url = os.getenv("OPENAI_BASE_URL", "")
         repositories = _load_json("AGENT_GIT_REMOTE_REPOSITORIES")
         workspace_root = os.getenv("AGENT_GIT_WORKSPACE_ROOT", "").strip()
         workspace_directories = _load_json("AGENT_GIT_WORKSPACE_DIRECTORIES")

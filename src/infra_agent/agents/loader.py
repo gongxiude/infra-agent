@@ -47,14 +47,14 @@ def discover_agents(agents_dir: Path) -> dict[str, AgentDefinition]:
 def build_subagent(
     defn: AgentDefinition,
     skills_dir: Path,
-    model: str,
+    model: str | object,
 ) -> Agent[AgentContext]:
     """从 AgentDefinition 构建一个 SDK Agent 对象。
 
     Args:
         defn: 子代理定义
         skills_dir: skills 根目录
-        model: LLM 模型名称
+        model: LLM 模型名称或 Model 对象
     """
 
     # 根据定义过滤工具
@@ -85,14 +85,14 @@ def build_subagent(
 def build_triage_agent(
     agents_dir: Path,
     skills_dir: Path,
-    model: str,
+    model: str | object,
 ) -> Agent[AgentContext]:
     """构建 triage agent，所有子代理作为 handoffs。
 
     Args:
         agents_dir: agents 根目录
         skills_dir: skills 根目录
-        model: LLM 模型名称
+        model: LLM 模型名称或 Model 对象
     """
 
     definitions = discover_agents(agents_dir)
