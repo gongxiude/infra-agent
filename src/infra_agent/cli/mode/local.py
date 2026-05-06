@@ -86,11 +86,11 @@ async def _run_local_shell() -> None:
             console.print(result)
             continue
         result = await _submit_chat(service, command)
-        console.print(result)
+        console.print(f"\n[green]{result}[/green]\n")
 
 
-async def _submit_chat(service: InfraAgentService, message: str) -> dict[str, Any]:
-    """提交自然语言消息。"""
+async def _submit_chat(service: InfraAgentService, message: str) -> str:
+    """提交自然语言消息，返回 agent 输出文本。"""
 
     task = service.signal_router.from_user_chat(
         source_id="cli-local",
@@ -99,12 +99,7 @@ async def _submit_chat(service: InfraAgentService, message: str) -> dict[str, An
     )
     await service.submit_task(task)
     result = await service.run_once()
-    return {
-        "task_id": task.id,
-        "task_type": task.type,
-        "context": task.context.model_dump(mode="json"),
-        "result": result,
-    }
+    return result.get("final_output", "") if result else "（无响应）"
 
 
 async def _submit_typed_task(

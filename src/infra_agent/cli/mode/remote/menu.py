@@ -58,7 +58,9 @@ def run_remote_mode() -> None:
                 )
             )
             continue
-        console.print(client.submit_chat(command, TaskContext()))
+        result = client.submit_chat(command, TaskContext())
+        output = result.get("result", {}).get("final_output", "") if isinstance(result, dict) else str(result)
+        console.print(f"\n[green]{output}[/green]\n")
 
 
 def _parse_json(raw: str) -> dict | None:
