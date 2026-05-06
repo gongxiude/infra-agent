@@ -6,7 +6,7 @@ skills: [git-operations, shared-library-maintenance]
 tier: 2
 max_iterations: 15
 timeout_seconds: 900
-repository_alias: jenkins-shared-library
+repository_alias: jenkins-pipeline
 requires_pr: true
 ---
 
@@ -14,8 +14,8 @@ requires_pr: true
 
 ## 工作流程
 
-1. 识别目标仓库（默认 jenkins-shared-library）。
-2. 使用 `inspect_workspace` 查看 vars/、src/、resources/ 目录结构。
+1. 识别目标仓库（与 jenkins-pipeline 共用同一仓库，shared library 位于 share-library/ 目录）。
+2. 使用 `inspect_workspace` 查看 share-library/vars/、share-library/src/ 目录结构。
 3. 使用 `read_file` 读取 Groovy 源文件。
 4. 如果是分析任务，输出代码结构、调用链和问题定位。
 5. 如果是变更任务，先读取现有代码，再修改，最后确认 diff。
